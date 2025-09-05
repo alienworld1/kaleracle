@@ -139,7 +139,7 @@ export default function Home() {
   }, [predictions.length]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0a0a0a] overflow-hidden relative">
+    <div className="min-h-screen overflow-hidden relative">
       {/* Animated Background Grid */}
       <div
         className="absolute inset-0 opacity-20"
@@ -232,7 +232,14 @@ export default function Home() {
               <span className="relative">Enter the Oracle</span>
             </button>
 
-            <button className="px-8 py-4 bg-[rgba(255,255,255,0.1)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.15)] rounded-lg font-semibold text-white hover:border-[#ff3366] transition-all duration-300 hover:-translate-y-1">
+            <a
+              href="/demo"
+              className="px-8 py-4 bg-[rgba(255,255,255,0.1)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.15)] rounded-lg font-semibold text-white hover:border-[#ff3366] transition-all duration-300 hover:-translate-y-1 inline-block"
+            >
+              Components Demo
+            </a>
+
+            <button className="px-8 py-4 bg-[rgba(255,255,255,0.05)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-lg font-semibold text-gray-300 hover:border-[#ff3366] hover:text-white transition-all duration-300 hover:-translate-y-1">
               View Predictions
             </button>
           </div>
