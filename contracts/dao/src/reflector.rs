@@ -24,6 +24,10 @@ pub enum ReflectorAsset {
 
 /// Reflector client wrapper for easy integration with DAO contract
 /// Updated to use proper Reflector interface for EUR/USD queries
+/// 
+/// MVP Implementation Note: Currently returns mock data to prevent 
+/// UnreachableCodeReached errors during contract execution. In production,
+/// this would make actual contract calls to Reflector oracle.
 #[allow(dead_code)]
 pub struct ReflectorClient {
     pub address: Address,
@@ -38,6 +42,7 @@ impl ReflectorClient {
 
     /// Fetch the last price for an asset from Reflector oracle
     /// Uses ReflectorAsset::Other(Symbol::new("EUR")) for EUR/USD pair
+    /// For MVP, returns mock data to prevent contract call errors
     pub fn get_last_price(&self, env: &Env, asset_symbol: String) -> Option<PriceData> {
         // Convert asset symbol to ReflectorAsset format
         let eur_str = String::from_str(env, "EUR");
@@ -45,18 +50,26 @@ impl ReflectorClient {
         let eur_usd_str = String::from_str(env, "EUR/USD");
         let btc_str = String::from_str(env, "BTC");
 
+        // For MVP, we'll simulate the ReflectorAsset creation but return mock data
+        // to avoid UnreachableCodeReached errors during contract execution
         let _reflector_asset = if asset_symbol == eur_str {
             ReflectorAsset::Other(Symbol::new(env, "EUR"))
         } else if asset_symbol == usd_str {
             ReflectorAsset::Other(Symbol::new(env, "USD"))
+        } else if asset_symbol == btc_str {
+            ReflectorAsset::Other(Symbol::new(env, "BTC"))
         } else {
-            // For other assets, create symbol directly
             ReflectorAsset::Other(Symbol::new(env, "OTHER"))
         };
 
-        // In production, this would make an actual contract call to Reflector
-        // Example call: reflector_contract.call("lastprice", reflector_asset)
-        // For MVP testing, return realistic mock data based on asset
+        // TODO: In production, make actual Reflector contract call:
+        // let result = env.invoke_contract(
+        //     &self.address,
+        //     &Symbol::new(env, "lastprice"),
+        //     (reflector_asset,).into_val(env)
+        // );
+
+        // For MVP testing, return realistic mock data to prevent execution errors
         if asset_symbol == eur_str || asset_symbol == eur_usd_str {
             Some(PriceData {
                 price: 1_085_600_000_000_000i128, // 1.0856 EUR/USD in 14 decimals
