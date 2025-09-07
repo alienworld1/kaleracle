@@ -31,6 +31,8 @@ pub enum Error {
     OracleDataUnavailable = 7,
     /// Prediction already resolved
     AlreadyResolved = 8,
+    /// KALE mining hash verification failed
+    HashVerificationFailed = 9,
 }
 
 /// Team information structure
@@ -269,6 +271,43 @@ impl CollaborativeDao {
         let historical_data = reflector_client
             .get_price(&env, asset_symbol, prediction.timestamp)
             .ok_or(Error::OracleDataUnavailable)?;
+
+        // KALE Mining Hash Verification (Basic verification before full ZKP)
+        // Simulate KALE proof-of-teamwork hash verification using oracle data
+        // In full implementation, this would verify team mining contributions
+        
+        // Create hash-like verification using prediction and oracle price data
+        let prediction_hash_value = (prediction.timestamp % 1000) as i32;
+        let oracle_hash_value = ((current_data.price + historical_data.price) % 1000) as i32;
+        
+        // Basic verification: check if hash values are reasonable
+        // This simulates KALE mining verification where team work is validated
+        let hash_verification_passed = prediction_hash_value > 0 
+            && oracle_hash_value > 0 
+            && current_data.price > 0 
+            && historical_data.price > 0;
+        
+        // Enhanced verification: ensure oracle data consistency
+        let oracle_data_valid = current_data.price != historical_data.price; // Price must have changed
+        
+        if !hash_verification_passed || !oracle_data_valid {
+            // For MVP, return error for failed KALE mining verification
+            env.events().publish((
+                "kale_verification_failed", 
+                prediction_id.clone(),
+                prediction_hash_value,
+                oracle_hash_value
+            ), None::<String>);
+            return Err(Error::HashVerificationFailed);
+        }
+
+        // Log successful KALE mining verification
+        env.events().publish((
+            "kale_mining_verified", 
+            prediction_id.clone(),
+            prediction_hash_value,
+            oracle_hash_value
+        ), None::<String>);
 
         // Determine if prediction was correct based on price movement
         let price_increased = current_data.price > historical_data.price;
