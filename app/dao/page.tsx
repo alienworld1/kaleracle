@@ -6,6 +6,7 @@ import { TransactionBuilder, Networks } from '@stellar/stellar-sdk';
 import PredictionForm from '../components/PredictionForm';
 import Dashboard from '../components/Dashboard';
 import Button from '../components/Button';
+import { useWallet } from '../ClientLayout';
 
 // Toast notification component
 const Toast: React.FC<{
@@ -54,9 +55,9 @@ interface Toast {
 
 interface PredictionFormData {
   teamName: string;
-  stakePercentage: number;
-  prediction: boolean | null;
   asset: string;
+  direction: 'up' | 'down';
+  stakePercentage: number;
 }
 
 interface PredictionResult {
@@ -70,10 +71,11 @@ interface PredictionResult {
 }
 
 export default function DaoPage() {
+  const { isWalletConnected, publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [predictions, setPredictions] = useState<PredictionResult[]>([]);
-  const [connectedWallet, setConnectedWallet] = useState<string>('');
+  const [userTeam, setUserTeam] = useState<string | null>(null);
   const [toastIdCounter, setToastIdCounter] = useState(0);
 
   // Toast management
@@ -94,33 +96,51 @@ export default function DaoPage() {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
-  // Check wallet connection on mount
+  // Load user's team when wallet is connected
   useEffect(() => {
-    const checkWalletConnection = async () => {
+    const loadUserTeam = async () => {
+      if (!isWalletConnected || !publicKey) {
+        setUserTeam(null);
+        return;
+      }
+
       try {
-        const { isConnected } = await import('@stellar/freighter-api');
-        const connected = await isConnected();
-        if (connected) {
-          const { getAddress } = await import('@stellar/freighter-api');
-          const result = await getAddress();
-          setConnectedWallet(result.address);
+        console.log('Loading team for address:', publicKey);
+        const teamResponse = await fetch(
+          `/api/teams/user-team?address=${publicKey}`,
+          {
+            method: 'GET',
+          },
+        );
+
+        if (teamResponse.ok) {
+          const teamData = await teamResponse.json();
+          console.log('Team API response:', teamData);
+          setUserTeam(teamData.teamName);
+          console.log('User team loaded:', teamData.teamName);
+        } else {
+          console.error('Failed to load user team:', teamResponse.status);
+          const errorText = await teamResponse.text();
+          console.error('Error response:', errorText);
+          setUserTeam(null);
         }
       } catch (error) {
-        console.error('Error checking wallet connection:', error);
+        console.error('Error loading user team:', error);
+        setUserTeam(null);
       }
     };
 
-    checkWalletConnection();
-  }, []);
+    loadUserTeam();
+  }, [isWalletConnected, publicKey]);
 
   // Handle prediction form submission
   const handlePredictionSubmit = async (formData: PredictionFormData) => {
-    if (!connectedWallet) {
+    if (!publicKey) {
       addToast('Please connect your wallet first', 'error');
       return;
     }
 
-    if (formData.prediction === null) {
+    if (!formData.direction) {
       addToast('Please select a prediction direction', 'error');
       return;
     }
@@ -137,12 +157,12 @@ export default function DaoPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          publicKey: connectedWallet,
+          publicKey: publicKey,
           teamName: formData.teamName,
           stakePercentage: formData.stakePercentage,
           prediction: {
             asset: formData.asset,
-            direction: formData.prediction,
+            direction: formData.direction === 'up',
           },
         }),
       });
@@ -310,14 +330,52 @@ export default function DaoPage() {
                 Collaborative Price Predictions
               </p>
             </div>
-            {connectedWallet && (
-              <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-lg px-4 py-2">
-                <p className="text-xs text-gray-300 mb-1">Connected Wallet</p>
-                <p className="text-white font-mono text-sm">
-                  {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-6)}
-                </p>
-              </div>
-            )}
+            <div className="flex items-center space-x-4">
+              {publicKey && (
+                <div className="flex items-center space-x-4">
+                  {/* Team Status */}
+                  <div className="text-right">
+                    {userTeam ? (
+                      <div>
+                        <p className="text-xs text-gray-300">Team</p>
+                        <p className="text-white font-medium">{userTeam}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-red-300">No Team</p>
+                        <a
+                          href="/teams"
+                          className="text-red-400 hover:text-red-300 text-sm underline"
+                        >
+                          Join or Create Team
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Wallet Info */}
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-lg px-4 py-2">
+                    <p className="text-xs text-gray-300 mb-1">
+                      Connected Wallet
+                    </p>
+                    <p className="text-white font-mono text-sm">
+                      {publicKey.slice(0, 6)}...
+                      {publicKey.slice(-6)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Teams Link */}
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => (window.location.href = '/teams')}
+                className="text-sm"
+              >
+                Manage Teams
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -330,7 +388,7 @@ export default function DaoPage() {
               <h2 className="text-xl font-semibold text-white mb-4">
                 Make Prediction
               </h2>
-              {!connectedWallet ? (
+              {!publicKey ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400 mb-4">
                     Connect your wallet to start making predictions
@@ -345,7 +403,8 @@ export default function DaoPage() {
               ) : (
                 <PredictionForm
                   onSubmit={handlePredictionSubmit}
-                  isConnected={!!connectedWallet}
+                  isConnected={isWalletConnected}
+                  userTeam={userTeam}
                 />
               )}
             </div>

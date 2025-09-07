@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { isConnected, requestAccess } from '@stellar/freighter-api';
 import freighterApi from '@stellar/freighter-api';
 import Button from './Button';
+import { useWallet } from '../ClientLayout';
 
 interface ConnectWalletProps {
   onWalletConnected?: (publicKey: string) => void;
@@ -14,11 +15,15 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
   onWalletConnected,
   onWalletDisconnected,
 }) => {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [publicKey, setPublicKey] = useState<string>('');
+  const {
+    isWalletConnected,
+    publicKey,
+    setWalletConnected,
+    hasManuallyDisconnected,
+    setManuallyDisconnected,
+  } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
-  const [hasManuallyDisconnected, setHasManuallyDisconnected] = useState(false);
 
   // Function to check if Freighter is really available
   const checkFreighterAvailability = (): boolean => {
@@ -49,17 +54,28 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
   // Check wallet connection on component mount
   useEffect(() => {
     const checkConnectionOnMount = async () => {
+      console.log('ConnectWallet checkConnectionOnMount:', {
+        hasManuallyDisconnected,
+        isWalletConnected,
+        publicKey: publicKey ? `${publicKey.slice(0, 6)}...` : 'none',
+      });
+
       // Skip auto-connection if user has manually disconnected
       if (hasManuallyDisconnected) {
+        console.log('Skipping auto-connection - user manually disconnected');
         return;
       }
 
       try {
         const connected = await isConnected();
+        console.log('Freighter isConnected result:', connected);
         if (connected) {
           const result = await freighterApi.getAddress();
-          setPublicKey(result.address);
-          setIsWalletConnected(true);
+          console.log(
+            'Auto-connecting wallet with address:',
+            result.address.slice(0, 6) + '...',
+          );
+          setWalletConnected(true, result.address);
           onWalletConnected?.(result.address);
         }
       } catch (err) {
@@ -68,12 +84,12 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
     };
 
     checkConnectionOnMount();
-  }, [onWalletConnected, hasManuallyDisconnected]);
+  }, [hasManuallyDisconnected, setWalletConnected]); // Removed onWalletConnected from dependencies
 
   const connectWallet = async () => {
     setIsLoading(true);
     setError('');
-    setHasManuallyDisconnected(false); // Reset the flag when user manually connects
+    setManuallyDisconnected(false); // Reset the flag when user manually connects
 
     try {
       // Test if Freighter is working by trying isConnected first
@@ -90,8 +106,7 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
       // Get the public key
       const result = await freighterApi.getAddress();
 
-      setPublicKey(result.address);
-      setIsWalletConnected(true);
+      setWalletConnected(true, result.address);
       onWalletConnected?.(result.address);
     } catch (err: unknown) {
       console.error('Error connecting wallet:', err);
@@ -126,10 +141,13 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
   };
 
   const disconnectWallet = async () => {
-    setHasManuallyDisconnected(true); // Set flag to prevent auto-reconnection
-    setPublicKey('');
-    setIsWalletConnected(false);
+    console.log('Disconnecting wallet - setting manual disconnect flag');
+    setManuallyDisconnected(true); // Set flag to prevent auto-reconnection
+    setWalletConnected(false, '');
     setError('');
+
+    // Notify parent components that wallet was disconnected
+    onWalletDisconnected?.();
   };
   const formatPublicKey = (key: string) => {
     if (key.length <= 12) return key;

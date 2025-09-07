@@ -7,6 +7,8 @@ interface WalletContextType {
   isWalletConnected: boolean;
   publicKey: string;
   setWalletConnected: (connected: boolean, publicKey?: string) => void;
+  hasManuallyDisconnected: boolean;
+  setManuallyDisconnected: (disconnected: boolean) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -26,24 +28,47 @@ interface ClientLayoutProps {
 const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [publicKey, setPublicKey] = useState<string>('');
+  const [hasManuallyDisconnected, setHasManuallyDisconnected] = useState(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('walletManuallyDisconnected') === 'true';
+    }
+    return false;
+  });
 
   const setWalletConnected = (connected: boolean, key?: string) => {
     setIsWalletConnected(connected);
     setPublicKey(key || '');
   };
 
+  const setManuallyDisconnected = (disconnected: boolean) => {
+    setHasManuallyDisconnected(disconnected);
+    // Persist to localStorage
+    if (typeof window !== 'undefined') {
+      if (disconnected) {
+        localStorage.setItem('walletManuallyDisconnected', 'true');
+      } else {
+        localStorage.removeItem('walletManuallyDisconnected');
+      }
+    }
+  };
+
   const handleWalletConnected = (publicKey: string) => {
     setWalletConnected(true, publicKey);
+    setManuallyDisconnected(false); // Clear the disconnection flag when connecting
   };
 
   const handleWalletDisconnected = () => {
     setWalletConnected(false, '');
+    setManuallyDisconnected(true);
   };
 
   const walletContextValue: WalletContextType = {
     isWalletConnected,
     publicKey,
     setWalletConnected,
+    hasManuallyDisconnected,
+    setManuallyDisconnected,
   };
 
   return (

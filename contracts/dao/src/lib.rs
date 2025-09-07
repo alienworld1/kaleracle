@@ -243,35 +243,54 @@ impl CollaborativeDao {
             return Err(Error::AlreadyResolved);
         }
 
-        // Get Reflector oracle address
+        // Get Reflector oracle address from storage
         let reflector_address: Address = env
             .storage()
             .persistent()
             .get(&DataKey::ReflectorOracle)
-            .unwrap();
+            .ok_or(Error::OracleDataUnavailable)?;
 
         let reflector_client = ReflectorClient::new(&env, &reflector_address);
 
-        // Fetch current price from Reflector
+        // For EUR/USD predictions, query EUR from Reflector using ReflectorAsset::Other
+        let asset_symbol = if prediction.asset == String::from_str(&env, "EUR/USD") {
+            String::from_str(&env, "EUR")
+        } else {
+            prediction.asset.clone()
+        };
+
+        // Fetch current price from Reflector oracle
         let current_data = reflector_client
-            .get_last_price(&env, prediction.asset.clone())
+            .get_last_price(&env, asset_symbol.clone())
             .ok_or(Error::OracleDataUnavailable)?;
 
         // Get historical price at prediction time for proper comparison
+        // In production, this would use historical price data from Reflector
         let historical_data = reflector_client
-            .get_price(&env, prediction.asset.clone(), prediction.timestamp)
+            .get_price(&env, asset_symbol, prediction.timestamp)
             .ok_or(Error::OracleDataUnavailable)?;
 
-        // Determine if prediction was correct
+        // Determine if prediction was correct based on price movement
         let price_increased = current_data.price > historical_data.price;
         let prediction_correct = prediction.prediction == price_increased;
 
+        // Mark prediction as resolved
         prediction.resolved = true;
         prediction.outcome = Some(prediction_correct);
 
+        // Store updated prediction
         env.storage()
             .persistent()
-            .set(&DataKey::Predictions(prediction_id), &prediction);
+            .set(&DataKey::Predictions(prediction_id.clone()), &prediction);
+
+        // Log the resolution for debugging
+        env.events().publish((
+            "prediction_resolved", 
+            prediction_id,
+            prediction_correct,
+            current_data.price,
+            historical_data.price
+        ), None::<String>);
 
         Ok(prediction_correct)
     }
@@ -382,6 +401,7 @@ impl CollaborativeDao {
     }
 
     /// Generate unique prediction ID
+    #[allow(dead_code)]
     fn generate_prediction_id(env: &Env) -> String {
         let counter: u64 = env
             .storage()

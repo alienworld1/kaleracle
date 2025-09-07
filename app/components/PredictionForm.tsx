@@ -4,23 +4,29 @@ import React, { useState } from 'react';
 import Button from './Button';
 import Input from './Input';
 
-interface PredictionFormData {
+interface PredictionFormDataSubmit {
   teamName: string;
-  stakePercentage: number;
-  prediction: boolean | null;
   asset: string;
+  direction: 'up' | 'down';
+  stakePercentage: number;
+}
+
+interface PredictionFormData {
+  asset: string;
+  direction: 'up' | 'down';
+  stakePercentage: number;
 }
 
 interface PredictionFormErrors {
-  teamName?: string;
-  stakePercentage?: string;
-  prediction?: string;
   asset?: string;
+  direction?: string;
+  stakePercentage?: string;
 }
 
 interface PredictionFormProps {
-  onSubmit: (data: PredictionFormData) => Promise<void>;
+  onSubmit: (data: PredictionFormDataSubmit) => Promise<void>;
   isConnected: boolean;
+  userTeam: string | null;
   maxStakePercentage?: number;
   availableAssets?: string[];
 }
@@ -28,14 +34,14 @@ interface PredictionFormProps {
 const PredictionForm: React.FC<PredictionFormProps> = ({
   onSubmit,
   isConnected,
+  userTeam,
   maxStakePercentage = 100,
   availableAssets = ['EUR/USD', 'BTC/USD', 'ETH/USD', 'XLM/USD'],
 }) => {
   const [formData, setFormData] = useState<PredictionFormData>({
-    teamName: '',
-    stakePercentage: 0,
-    prediction: null,
     asset: availableAssets[0],
+    direction: 'up',
+    stakePercentage: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<PredictionFormErrors>({});
@@ -43,8 +49,9 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: PredictionFormErrors = {};
 
-    if (!formData.teamName.trim()) {
-      newErrors.teamName = 'Team name is required';
+    if (!userTeam) {
+      // This should be handled by the parent component
+      return false;
     }
 
     if (
@@ -54,12 +61,12 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
       newErrors.stakePercentage = `Stake percentage must be between 1 and ${maxStakePercentage}`;
     }
 
-    if (formData.prediction === null) {
-      newErrors.prediction = 'Please select a prediction';
-    }
-
     if (!formData.asset) {
       newErrors.asset = 'Please select an asset';
+    }
+
+    if (!formData.direction) {
+      newErrors.direction = 'Please select a prediction direction';
     }
 
     setErrors(newErrors);
@@ -74,19 +81,30 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
       return;
     }
 
+    if (!userTeam) {
+      alert(
+        'You must be part of a team to make predictions. Please join or create a team first.',
+      );
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      await onSubmit({
+        teamName: userTeam,
+        asset: formData.asset,
+        direction: formData.direction,
+        stakePercentage: formData.stakePercentage,
+      });
       // Reset form on successful submission
       setFormData({
-        teamName: '',
-        stakePercentage: 0,
-        prediction: null,
         asset: availableAssets[0],
+        direction: 'up',
+        stakePercentage: 0,
       });
       setErrors({});
     } catch (error) {
@@ -119,16 +137,20 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Team Name */}
-        <Input
-          label="Team Name"
-          type="text"
-          value={formData.teamName}
-          onChange={e => handleInputChange('teamName', e.target.value)}
-          placeholder="Enter team name"
-          error={errors.teamName}
-          variant="glass"
-        />
+        {/* Team Info Display */}
+        {userTeam ? (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+            <h4 className="text-green-400 font-medium mb-1">Your Team</h4>
+            <p className="text-white text-lg">{userTeam}</p>
+          </div>
+        ) : (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <h4 className="text-red-400 font-medium mb-1">No Team</h4>
+            <p className="text-gray-300 text-sm">
+              You must join or create a team before making predictions.
+            </p>
+          </div>
+        )}
 
         {/* Asset Selection */}
         <div>
@@ -163,9 +185,9 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => handleInputChange('prediction', true)}
+              onClick={() => handleInputChange('direction', 'up')}
               className={`p-4 rounded-lg border transition-all duration-300 ${
-                formData.prediction === true
+                formData.direction === 'up'
                   ? 'bg-green-500/20 border-green-500 text-green-400'
                   : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
               }`}
@@ -175,9 +197,9 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => handleInputChange('prediction', false)}
+              onClick={() => handleInputChange('direction', 'down')}
               className={`p-4 rounded-lg border transition-all duration-300 ${
-                formData.prediction === false
+                formData.direction === 'down'
                   ? 'bg-red-500/20 border-red-500 text-red-400'
                   : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
               }`}
@@ -186,8 +208,8 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
               <div className="font-medium">Price Will Fall</div>
             </button>
           </div>
-          {errors.prediction && (
-            <p className="mt-1 text-sm text-red-400">{errors.prediction}</p>
+          {errors.direction && (
+            <p className="mt-1 text-sm text-red-400">{errors.direction}</p>
           )}
         </div>
 
@@ -240,19 +262,27 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
           variant="primary"
           size="lg"
           loading={isSubmitting}
-          disabled={!isConnected}
+          disabled={!isConnected || !userTeam}
           className="w-full"
         >
-          {isConnected
-            ? isSubmitting
-              ? 'Submitting Prediction...'
-              : 'Submit Prediction'
-            : 'Connect Wallet to Continue'}
+          {!isConnected
+            ? 'Connect Wallet to Continue'
+            : !userTeam
+              ? 'Join a Team to Continue'
+              : isSubmitting
+                ? 'Submitting Prediction...'
+                : 'Submit Prediction'}
         </Button>
 
         {!isConnected && (
           <p className="text-center text-sm text-gray-400">
             Please connect your Freighter wallet to submit predictions
+          </p>
+        )}
+
+        {isConnected && !userTeam && (
+          <p className="text-center text-sm text-gray-400">
+            You must join or create a team before making predictions
           </p>
         )}
       </form>
