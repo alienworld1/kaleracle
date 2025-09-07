@@ -249,7 +249,6 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
 
       <div className="mt-3 text-xs text-gray-400">
         <p>Connect your Freighter wallet to interact with Kaleracle DAO</p>
-        <p className="mt-1">• Make sure you&apos;re on Stellar Testnet</p>
         <p>• Ensure you have KALE tokens for staking</p>
       </div>
     </div>
