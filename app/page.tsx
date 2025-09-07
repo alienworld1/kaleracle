@@ -227,16 +227,19 @@ export default function Home() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <button className="group relative px-8 py-4 bg-gradient-to-r from-[#ff3366] to-[#cc1144] border border-[rgba(255,51,102,0.3)] rounded-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(255,51,102,0.3)]">
+            <a
+              href="/dao"
+              className="group relative px-8 py-4 bg-gradient-to-r from-[#ff3366] to-[#cc1144] border border-[rgba(255,51,102,0.3)] rounded-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(255,51,102,0.3)] inline-block"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-[#ff3366] to-[#cc1144] rounded-lg blur opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
-              <span className="relative">Enter the Oracle</span>
-            </button>
+              <span className="relative">Enter the DAO</span>
+            </a>
 
             <a
-              href="/demo"
+              href="/teams"
               className="px-8 py-4 bg-[rgba(255,255,255,0.1)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.15)] rounded-lg font-semibold text-white hover:border-[#ff3366] transition-all duration-300 hover:-translate-y-1 inline-block"
             >
-              Components Demo
+              View Teams
             </a>
 
             <button className="px-8 py-4 bg-[rgba(255,255,255,0.05)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-lg font-semibold text-gray-300 hover:border-[#ff3366] hover:text-white transition-all duration-300 hover:-translate-y-1">

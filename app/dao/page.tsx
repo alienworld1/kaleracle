@@ -519,15 +519,6 @@ export default function DaoPage() {
                   <p>Rewards are distributed to winning teams</p>
                 </div>
               </div>
-
-              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-green-300 text-sm">
-                  <strong>Real Contract Integration:</strong> This app now uses
-                  your deployed smart contracts! Transactions call actual DAO
-                  contract functions (stake_kale, make_prediction,
-                  resolve_prediction) on Stellar testnet.
-                </p>
-              </div>
             </div>
           </div>
         </div>

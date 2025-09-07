@@ -51,11 +51,8 @@ const Header: React.FC<HeaderProps> = ({
                 <span className="text-white font-bold text-sm">K</span>
               </div>
               <h1 className="text-xl font-bold text-white">
-                Kal<span className="text-red-400">oracle</span>
+                Kal<span className="text-red-400">eracle</span>
               </h1>
-            </div>
-            <div className="ml-3 px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400 font-medium">
-              TESTNET
             </div>
           </div>
           {/* Navigation */}
@@ -67,22 +64,22 @@ const Header: React.FC<HeaderProps> = ({
               Home
             </Link>
             <Link
-              href="/demo"
+              href="/dao"
               className="text-gray-300 hover:text-white transition-colors duration-200"
             >
-              Demo
+              DAO
+            </Link>
+            <Link
+              href="/teams"
+              className="text-gray-300 hover:text-white transition-colors duration-200"
+            >
+              Teams
             </Link>
             <a
               href="#predictions"
               className="text-gray-300 hover:text-white transition-colors duration-200"
             >
               Predictions
-            </a>
-            <a
-              href="#teams"
-              className="text-gray-300 hover:text-white transition-colors duration-200"
-            >
-              Teams
             </a>
           </nav>{' '}
           {/* Wallet Connection */}
@@ -91,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className="hidden sm:flex items-center space-x-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-lg">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-green-400 text-sm font-medium">
-                Stellar Testnet
+                Stellar
               </span>
             </div>
 
@@ -113,22 +110,22 @@ const Header: React.FC<HeaderProps> = ({
               Home
             </Link>
             <Link
-              href="/demo"
+              href="/dao"
               className="text-gray-300 hover:text-white transition-colors duration-200 text-sm"
             >
-              Demo
+              DAO
+            </Link>
+            <Link
+              href="/teams"
+              className="text-gray-300 hover:text-white transition-colors duration-200 text-sm"
+            >
+              Teams
             </Link>
             <a
               href="#predictions"
               className="text-gray-300 hover:text-white transition-colors duration-200 text-sm"
             >
               Predictions
-            </a>
-            <a
-              href="#teams"
-              className="text-gray-300 hover:text-white transition-colors duration-200 text-sm"
-            >
-              Teams
             </a>
           </div>
         </nav>

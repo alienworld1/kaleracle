@@ -98,12 +98,6 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
                 </span>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-white/5">
-              <p className="text-gray-500 text-xs text-center">
-                Built for Stellar Hacks: KALE x Reflector hackathon. Running on
-                Stellar Testnet.
-              </p>
-            </div>
           </div>
         </footer>
       </div>

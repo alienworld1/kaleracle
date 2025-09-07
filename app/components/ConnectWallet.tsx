@@ -175,9 +175,7 @@ const ConnectWallet: React.FC<ConnectWalletProps> = ({
         </div>
         <div className="mt-2 flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-          <span className="text-xs text-green-400">
-            Connected to Stellar Testnet
-          </span>
+          <span className="text-xs text-green-400">Connected to Stellar</span>
         </div>
       </div>
     );
